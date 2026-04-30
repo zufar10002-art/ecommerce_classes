@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Tests for loading data from JSON.
 """
@@ -6,7 +7,7 @@ import os
 import tempfile
 
 from load_data import load_categories_from_json
-from main import Category, Product
+from main import Category
 
 
 class TestLoadData:
@@ -41,10 +42,8 @@ class TestLoadData:
             assert len(categories) == 1
             assert isinstance(categories[0], Category)
             assert categories[0].name == "Test Category"
-            assert len(categories[0].products) == 1
-            assert isinstance(categories[0].products[0], Product)
-            assert categories[0].products[0].name == "Test Product"
-            assert categories[0].products[0].price == 99.99
+            assert "Test Product" in categories[0].products
+            assert "99.99" in categories[0].products
         finally:
             os.unlink(temp_file)
 
@@ -81,8 +80,32 @@ class TestLoadData:
 
             assert len(categories) == 2
             assert categories[0].name == "Category 1"
-            assert len(categories[0].products) == 0
+            assert categories[0].products == ""
             assert categories[1].name == "Category 2"
-            assert len(categories[1].products) == 1
+            assert "Product A" in categories[1].products
+        finally:
+            os.unlink(temp_file)
+
+    def test_load_empty_products(self):
+        """Test loading category with empty products list."""
+        test_data = [
+            {
+                "name": "Empty Category",
+                "description": "No products",
+                "products": []
+            }
+        ]
+
+        with tempfile.NamedTemporaryFile(
+            mode='w', suffix='.json', delete=False, encoding='utf-8'
+        ) as f:
+            json.dump(test_data, f)
+            temp_file = f.name
+
+        try:
+            categories = load_categories_from_json(temp_file)
+            assert len(categories) == 1
+            assert categories[0].name == "Empty Category"
+            assert categories[0].products == ""
         finally:
             os.unlink(temp_file)
