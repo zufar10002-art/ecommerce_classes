@@ -61,6 +61,25 @@ class TestProduct:
         assert product.price == 299.99
         assert product.quantity == 50
 
+    def test_product_str(self):
+        """Test __str__ method of Product."""
+        product = Product("TestPhone", "Desc", 500.0, 3)
+        expected = "TestPhone, 500.0 руб. Остаток: 3 шт."
+        assert str(product) == expected
+
+    def test_product_add(self):
+        """Test __add__ method of Product."""
+        product1 = Product("Phone", "Desc", 100.0, 2)   # 100 * 2 = 200
+        product2 = Product("Tablet", "Desc", 200.0, 3)  # 200 * 3 = 600
+        total = product1 + product2
+        assert total == 800.0
+
+    def test_product_add_type_error(self):
+        """Test that __add__ raises TypeError when adding non-Product."""
+        product = Product("Phone", "Desc", 100.0, 2)
+        with pytest.raises(TypeError):
+            _ = product + 100
+
 
 class TestCategory:
     """Tests for Category class."""
@@ -149,3 +168,18 @@ class TestCategory:
         """Test that products getter returns a string."""
         category = Category("Test", "Desc", [])
         assert isinstance(category.products, str)
+
+    def test_category_str(self):
+        """Test __str__ method of Category."""
+        product1 = Product("Phone", "Desc", 100.0, 2)
+        product2 = Product("Tablet", "Desc", 200.0, 3)
+        category = Category("Electronics", "Devices", [product1, product2])
+        # total quantity = 2 + 3 = 5
+        expected = "Electronics, количество продуктов: 5 шт."
+        assert str(category) == expected
+
+    def test_category_str_empty(self):
+        """Test __str__ method of Category with no products."""
+        category = Category("Empty", "Nothing", [])
+        expected = "Empty, количество продуктов: 0 шт."
+        assert str(category) == expected

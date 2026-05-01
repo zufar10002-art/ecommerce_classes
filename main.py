@@ -50,6 +50,29 @@ class Product:
             quantity=product_data['quantity']
         )
 
+    def __str__(self) -> str:
+        """
+        String representation of the product.
+
+        Returns:
+            String in format: "Product name, X rub. Stock: X pcs."
+        """
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __add__(self, other: 'Product') -> float:
+        """
+        Sum of total costs of two products (price * quantity).
+
+        Args:
+            other: Another Product object
+
+        Returns:
+            Total cost: (self.price * self.quantity) + (other.price * other.quantity)
+        """
+        if not isinstance(other, Product):
+            raise TypeError("Можно складывать только объекты Product")
+        return (self.price * self.quantity) + (other.price * other.quantity)
+
 
 class Category:
     """Class for category representation."""
@@ -81,12 +104,22 @@ class Category:
         Getter for products that returns formatted string.
 
         Returns:
-            String with all products in format: "Product name, X rub. Stock: X pcs.\n"
+            String with all products
         """
         result = ""
         for product in self.__products:
-            result += f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.\n"
+            result += str(product) + "\n"
         return result.strip()
+
+    def __str__(self) -> str:
+        """
+        String representation of the category.
+
+        Returns:
+            String in format: "Category name, amount of products: X pcs."
+        """
+        total_quantity = sum(product.quantity for product in self.__products)
+        return f"{self.name}, количество продуктов: {total_quantity} шт."
 
 
 if __name__ == "__main__":
@@ -150,3 +183,16 @@ if __name__ == "__main__":
     print(f"Price after trying to set -100: {test_product.price}")
     test_product.price = 0
     print(f"Price after trying to set 0: {test_product.price}")
+
+    # Тестируем __str__ для Product
+    print("\n--- Testing __str__ for Product ---")
+    print(str(product1))
+
+    # Тестируем __str__ для Category
+    print("\n--- Testing __str__ for Category ---")
+    print(str(category1))
+
+    # Тестируем __add__ для Product
+    print("\n--- Testing __add__ for Product ---")
+    total_cost = product1 + product2
+    print(f"Total cost of {product1.name} and {product2.name}: {total_cost} руб.")
