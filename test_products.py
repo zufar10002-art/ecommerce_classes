@@ -4,7 +4,7 @@ Tests for Product and Category classes.
 """
 import pytest
 
-from main import Category, Product
+from main import Category, LawnGrass, Product, Smartphone
 
 
 class TestProduct:
@@ -61,6 +61,80 @@ class TestProduct:
         assert product.price == 299.99
         assert product.quantity == 50
 
+    def test_product_str(self):
+        """Test __str__ method of Product."""
+        product = Product("TestPhone", "Desc", 500.0, 3)
+        expected = "TestPhone, 500.0 руб. Остаток: 3 шт."
+        assert str(product) == expected
+
+    def test_product_add_same_type(self):
+        """Test __add__ method with same type products."""
+        product1 = Product("Phone", "Desc", 100.0, 2)
+        product2 = Product("Tablet", "Desc", 200.0, 3)
+        total = product1 + product2
+        assert total == 800.0
+
+    def test_product_add_different_type_raises_error(self):
+        """Test __add__ raises TypeError when adding different class types."""
+        product = Product("Phone", "Desc", 100.0, 2)
+        grass = LawnGrass("Grass", "Desc", 50.0, 10, "Russia", "7 days", "green")
+        with pytest.raises(TypeError, match="Нельзя складывать Product и LawnGrass"):
+            _ = product + grass
+
+
+class TestSmartphone:
+    """Tests for Smartphone class."""
+
+    def test_smartphone_initialization(self):
+        """Test smartphone creation with all attributes."""
+        phone = Smartphone(
+            "Samsung", "Flagship", 100000.0, 5,
+            "8 ГГц", "SM-S918B", 256, "черный"
+        )
+        assert phone.name == "Samsung"
+        assert phone.price == 100000.0
+        assert phone.quantity == 5
+        assert phone.efficiency == "8 ГГц"
+        assert phone.model == "SM-S918B"
+        assert phone.memory == 256
+        assert phone.color == "черный"
+
+    def test_smartphone_str(self):
+        """Test __str__ method of Smartphone."""
+        phone = Smartphone(
+            "Samsung", "Flagship", 100000.0, 5,
+            "8 ГГц", "SM-S918B", 256, "черный"
+        )
+        assert "Смартфон" in str(phone)
+        assert "SM-S918B" in str(phone)
+        assert "256" in str(phone)
+
+
+class TestLawnGrass:
+    """Tests for LawnGrass class."""
+
+    def test_lawn_grass_initialization(self):
+        """Test lawn grass creation with all attributes."""
+        grass = LawnGrass(
+            "Изумруд", "For garden", 5000.0, 10,
+            "Россия", "7-14 дней", "зеленый"
+        )
+        assert grass.name == "Изумруд"
+        assert grass.price == 5000.0
+        assert grass.quantity == 10
+        assert grass.country == "Россия"
+        assert grass.germination_period == "7-14 дней"
+        assert grass.color == "зеленый"
+
+    def test_lawn_grass_str(self):
+        """Test __str__ method of LawnGrass."""
+        grass = LawnGrass(
+            "Изумруд", "For garden", 5000.0, 10,
+            "Россия", "7-14 дней", "зеленый"
+        )
+        assert "Газонная трава" in str(grass)
+        assert "Россия" in str(grass)
+
 
 class TestCategory:
     """Tests for Category class."""
@@ -87,12 +161,28 @@ class TestCategory:
         with pytest.raises(AttributeError):
             _ = category.__products
 
-    def test_add_product(self):
-        """Test add_product method."""
+    def test_add_product_valid(self):
+        """Test add_product with valid Product object."""
         category = Category("Test", "Desc", [])
         product = Product("New", "Desc", 50.0, 10)
         category.add_product(product)
         assert "New" in category.products
+
+    def test_add_product_invalid_raises_error(self):
+        """Test add_product raises TypeError when adding non-Product."""
+        category = Category("Test", "Desc", [])
+        with pytest.raises(TypeError, match="Можно добавлять только объекты Product или его наследников"):
+            category.add_product("not a product")
+
+    def test_add_product_with_smartphone(self):
+        """Test add_product with Smartphone object."""
+        category = Category("Test", "Desc", [])
+        phone = Smartphone(
+            "Samsung", "Flagship", 100000.0, 5,
+            "8 ГГц", "SM-S918B", 256, "черный"
+        )
+        category.add_product(phone)
+        assert "Смартфон" in category.products
 
     def test_add_product_increments_product_count(self):
         """Test that add_product increments product_count."""
@@ -149,3 +239,17 @@ class TestCategory:
         """Test that products getter returns a string."""
         category = Category("Test", "Desc", [])
         assert isinstance(category.products, str)
+
+    def test_category_str(self):
+        """Test __str__ method of Category."""
+        product1 = Product("Phone", "Desc", 100.0, 2)
+        product2 = Product("Tablet", "Desc", 200.0, 3)
+        category = Category("Electronics", "Devices", [product1, product2])
+        expected = "Electronics, количество продуктов: 5 шт."
+        assert str(category) == expected
+
+    def test_category_str_empty(self):
+        """Test __str__ method of Category with no products."""
+        category = Category("Empty", "Nothing", [])
+        expected = "Empty, количество продуктов: 0 шт."
+        assert str(category) == expected
