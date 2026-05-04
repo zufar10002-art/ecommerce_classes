@@ -23,4 +23,4 @@
 1. Клонируйте репозиторий:
 ```bash
 git clone https://github.com/zufar10002-art/ecommerce_classes.git
-cd ecommerce_classes
+cd ecommerce_classes"" 
