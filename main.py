@@ -2,17 +2,38 @@
 """
 Module with Product and Category classes for online store.
 """
+from abc import ABC, abstractmethod
 
 
-class Product:
+class LogMixin:
+    """Mixin for logging object creation."""
+
+    def __init__(self, *args, **kwargs):
+        print(f"Создан объект: {self.__class__.__name__}{args}")
+
+
+class BaseProduct(ABC):
+    """Abstract base class for all products."""
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """String representation of the product."""
+        pass
+
+
+class Product(LogMixin, BaseProduct):
     """Class for product representation."""
 
     def __init__(self, name: str, description: str,
                  price: float, quantity: int):
+        if quantity == 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
+
         self.name = name
         self.description = description
         self.__price = price
         self.quantity = quantity
+        super().__init__(name, description, price, quantity)
 
     @property
     def price(self) -> float:
@@ -21,12 +42,7 @@ class Product:
 
     @price.setter
     def price(self, new_price: float) -> None:
-        """
-        Setter for price with validation.
-
-        Args:
-            new_price: New price value
-        """
+        """Setter for price with validation."""
         if new_price <= 0:
             print("Цена не должна быть нулевая или отрицательная")
         else:
@@ -34,21 +50,56 @@ class Product:
 
     @classmethod
     def new_product(cls, product_data: dict) -> 'Product':
-        """
-        Class method to create a new Product from a dictionary.
-
-        Args:
-            product_data: Dictionary with keys 'name', 'description', 'price', 'quantity'
-
-        Returns:
-            Product instance
-        """
+        """Class method to create a new Product from a dictionary."""
         return cls(
             name=product_data['name'],
             description=product_data['description'],
             price=product_data['price'],
             quantity=product_data['quantity']
         )
+
+    def __str__(self) -> str:
+        """String representation of the product."""
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __add__(self, other: 'Product') -> float:
+        """Sum of total costs of two products (price * quantity)."""
+        if type(self) is not type(other):
+            raise TypeError(f"Нельзя складывать {type(self).__name__} и {type(other).__name__}")
+        return (self.price * self.quantity) + (other.price * other.quantity)
+
+
+class Smartphone(Product):
+    """Class for smartphone products."""
+
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 efficiency: str, model: str, memory: int, color: str):
+        super().__init__(name, description, price, quantity)
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
+
+    def __str__(self) -> str:
+        """String representation of smartphone."""
+        base_str = super().__str__()
+        return f"{base_str} (Смартфон: {self.model}, {self.memory}ГБ, {self.color})"
+
+
+class LawnGrass(Product):
+    """Class for lawn grass products."""
+
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 country: str, germination_period: str, color: str):
+        super().__init__(name, description, price, quantity)
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
+
+    def __str__(self) -> str:
+        """String representation of lawn grass."""
+        base_str = super().__str__()
+        return f"{base_str} (Газонная трава: {self.country}, срок прорастания {self.germination_period})"
 
 
 class Category:
@@ -66,87 +117,58 @@ class Category:
         Category.product_count += len(self.__products)
 
     def add_product(self, product: Product) -> None:
-        """
-        Add a product to the category.
-
-        Args:
-            product: Product object to add
-        """
+        """Add a product to the category."""
+        if not isinstance(product, Product):
+            raise TypeError("Можно добавлять только объекты Product или его наследников")
         self.__products.append(product)
         Category.product_count += 1
 
     @property
     def products(self) -> str:
-        """
-        Getter for products that returns formatted string.
-
-        Returns:
-            String with all products in format: "Product name, X rub. Stock: X pcs.\n"
-        """
+        """Getter for products that returns formatted string."""
         result = ""
         for product in self.__products:
-            result += f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.\n"
+            result += str(product) + "\n"
         return result.strip()
+
+    def __str__(self) -> str:
+        """String representation of the category."""
+        total_quantity = sum(product.quantity for product in self.__products)
+        return f"{self.name}, количество продуктов: {total_quantity} шт."
+
+    def middle_price(self) -> float:
+        """Calculate average price of products in the category."""
+        try:
+            total_price = sum(product.price for product in self.__products)
+            return total_price / len(self.__products)
+        except ZeroDivisionError:
+            return 0
 
 
 if __name__ == "__main__":
+    try:
+        Product("Бракованный товар", "Неверное количество", 1000.0, 0)
+    except ValueError:
+        print("Возникла ошибка ValueError при попытке добавить продукт с нулевым количеством")
+    else:
+        print("Не возникла ошибка ValueError при попытке добавить продукт с нулевым количеством")
+
     product1 = Product(
         "Samsung Galaxy S23 Ultra",
-        "256GB, Gray, 200MP camera",
+        "256GB, Серый цвет, 200MP камера",
         180000.0,
         5
     )
-    product2 = Product(
-        "Iphone 15",
-        "512GB, Gray space",
-        210000.0,
-        8
-    )
-    product3 = Product(
-        "Xiaomi Redmi Note 11",
-        "1024GB, Blue",
-        31000.0,
-        14
-    )
+    product2 = Product("Iphone 15", "512GB, Gray space", 210000.0, 8)
+    product3 = Product("Xiaomi Redmi Note 11", "1024GB, Синий", 31000.0, 14)
 
     category1 = Category(
-        "Smartphones",
-        "Smartphones for communication",
+        "Смартфоны",
+        "Категория смартфонов",
         [product1, product2, product3]
     )
 
-    print(category1.products)
-    print(f"\nTotal categories: {Category.category_count}")
-    print(f"Total products: {Category.product_count}")
+    print(category1.middle_price())
 
-    product4 = Product(
-        "55\" QLED 4K",
-        "Backlight",
-        123000.0,
-        7
-    )
-    category1.add_product(product4)
-    print("\n" + category1.products)
-    print(f"\nTotal categories: {Category.category_count}")
-    print(f"Total products: {Category.product_count}")
-
-    # Тестируем класс-метод new_product
-    print("\n--- Testing new_product classmethod ---")
-    product_data = {
-        "name": "Test Phone",
-        "description": "Test description",
-        "price": 999.99,
-        "quantity": 100
-    }
-    test_product = Product.new_product(product_data)
-    print(f"Created product: {test_product.name}, {test_product.price} руб.")
-
-    # Тестируем сеттер цены
-    print("\n--- Testing price setter ---")
-    print(f"Current price: {test_product.price}")
-    test_product.price = 500
-    print(f"New price after setting 500: {test_product.price}")
-    test_product.price = -100
-    print(f"Price after trying to set -100: {test_product.price}")
-    test_product.price = 0
-    print(f"Price after trying to set 0: {test_product.price}")
+    category_empty = Category("Пустая категория", "Категория без продуктов", [])
+    print(category_empty.middle_price())
